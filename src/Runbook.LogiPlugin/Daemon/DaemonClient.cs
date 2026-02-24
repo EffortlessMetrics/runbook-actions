@@ -19,13 +19,18 @@ public enum ConnectionState
 ///
 /// Default endpoint: ws://127.0.0.1:29381/ws
 /// Override via RUNBOOKD_WS environment variable.
+///
+/// Connection lifecycle:
+///   Connecting → Connected → (recv loop) → Disconnected → backoff → Connecting …
 /// </summary>
 public sealed class DaemonClient : IAsyncDisposable
 {
+    private const int KeepAliveSeconds = 15;
+
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private ConnectionState _state = ConnectionState.Disconnected;
-    private bool _askedToDisconnect = false;
+    private bool _disposed;
 
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
@@ -45,25 +50,27 @@ public sealed class DaemonClient : IAsyncDisposable
         }
     }
 
-    public async Task ConnectAsync()
+    public Task ConnectAsync()
     {
-        if (_askedToDisconnect) return;
+        if (_disposed) return Task.CompletedTask;
 
         _cts = new CancellationTokenSource();
-        _ = Task.Run(MaintainConnectionAsync, _cts.Token);
+        _ = Task.Run(MaintainConnectionAsync);
+        return Task.CompletedTask;
     }
 
     private async Task MaintainConnectionAsync()
     {
-        var backoff = TimeSpan.FromSeconds(1);
-        var maxBackoff = TimeSpan.FromSeconds(30);
+        var backoff = TimeSpan.FromMilliseconds(500);
+        var maxBackoff = TimeSpan.FromSeconds(5);
 
-        while (_cts != null && !_cts.IsCancellationRequested)
+        while (_cts is { IsCancellationRequested: false })
         {
             try
             {
                 State = ConnectionState.Connecting;
                 _ws = new ClientWebSocket();
+                _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(KeepAliveSeconds);
 
                 var url = Environment.GetEnvironmentVariable("RUNBOOKD_WS")
                           ?? "ws://127.0.0.1:29381/ws";
@@ -71,7 +78,7 @@ public sealed class DaemonClient : IAsyncDisposable
                 await _ws.ConnectAsync(new Uri(url), _cts.Token);
 
                 State = ConnectionState.Connected;
-                backoff = TimeSpan.FromSeconds(1); // Reset backoff on success
+                backoff = TimeSpan.FromMilliseconds(500); // Reset on success.
 
                 // Hello handshake.
                 await SendAsync(new
@@ -84,53 +91,70 @@ public sealed class DaemonClient : IAsyncDisposable
 
                 await ReceiveLoopAsync();
             }
-            catch (Exception)
+            catch (OperationCanceledException)
             {
-                State = ConnectionState.Disconnected;
-                if (_askedToDisconnect) break;
-
-                await Task.Delay(backoff, _cts?.Token ?? CancellationToken.None);
-                backoff = TimeSpan.FromTicks(Math.Min(maxBackoff.Ticks, backoff.Ticks * 2));
+                break;
+            }
+            catch
+            {
+                // Fall through to reconnect.
             }
             finally
             {
-                _ws?.Dispose();
+                try { _ws?.Dispose(); } catch { }
                 _ws = null;
+                if (!_disposed) State = ConnectionState.Disconnected;
             }
+
+            if (_disposed) break;
+
+            try
+            {
+                await Task.Delay(backoff, _cts?.Token ?? CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            backoff = TimeSpan.FromTicks(Math.Min(maxBackoff.Ticks, backoff.Ticks * 2));
         }
     }
 
-    public async Task SendKeypadPressAsync(int slot)
-        => await SendAsync(new { type = "keypad_press", slot });
+    public Task SendKeypadPressAsync(int slot)
+        => SendAsync(new { type = "keypad_press", slot });
 
-    public async Task SendDialpadButtonPressAsync(string button)
-        => await SendAsync(new { type = "dialpad_button_press", button });
+    public Task SendDialpadButtonPressAsync(string button)
+        => SendAsync(new { type = "dialpad_button_press", button });
 
-    public async Task SendAdjustmentAsync(string kind, int delta)
-        => await SendAsync(new { type = "adjustment", kind, delta });
+    public Task SendAdjustmentAsync(string kind, int delta)
+        => SendAsync(new { type = "adjustment", kind, delta });
 
     private async Task SendAsync(object message)
     {
-        if (_ws == null || _ws.State != WebSocketState.Open)
+        if (_ws is null || _ws.State != WebSocketState.Open)
             return;
 
         try
         {
             var json = JsonSerializer.Serialize(message);
             var bytes = Encoding.UTF8.GetBytes(json);
-            await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, _cts?.Token ?? CancellationToken.None);
+            await _ws.SendAsync(bytes, WebSocketMessageType.Text, true,
+                _cts?.Token ?? CancellationToken.None);
         }
-        catch { /* Best effort */ }
+        catch
+        {
+            // Best effort — send failures are non-fatal.
+        }
     }
 
     private async Task ReceiveLoopAsync()
     {
-        if (_ws is null)
-            return;
+        if (_ws is null) return;
 
         var buffer = new byte[64 * 1024];
 
-        while (_ws.State == WebSocketState.Open && (_cts?.IsCancellationRequested == false))
+        while (_ws.State == WebSocketState.Open && _cts is { IsCancellationRequested: false })
         {
             var result = await _ws.ReceiveAsync(buffer, _cts.Token);
             if (result.MessageType == WebSocketMessageType.Close)
@@ -144,8 +168,7 @@ public sealed class DaemonClient : IAsyncDisposable
                 if (!doc.RootElement.TryGetProperty("type", out var typeProp))
                     continue;
 
-                var type = typeProp.GetString();
-                if (type == "render")
+                if (typeProp.GetString() == "render")
                 {
                     Render = JsonSerializer.Deserialize<Render.RenderModel>(json);
                     RenderUpdated?.Invoke(this, EventArgs.Empty);
@@ -160,25 +183,21 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _askedToDisconnect = true;
-        try
-        {
-            _cts?.Cancel();
-        }
-        catch { }
+        _disposed = true;
+        try { _cts?.Cancel(); } catch { }
 
         if (_ws is not null)
         {
             try
             {
-                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutdown", CancellationToken.None);
+                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutdown",
+                    CancellationToken.None);
             }
             catch { }
             _ws.Dispose();
         }
 
         _cts?.Dispose();
-
         _ws = null;
         _cts = null;
         State = ConnectionState.Disconnected;

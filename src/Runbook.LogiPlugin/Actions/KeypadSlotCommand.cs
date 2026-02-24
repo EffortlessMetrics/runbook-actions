@@ -18,14 +18,11 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
 
     protected override bool OnLoad()
     {
-        // Optional: subscribe to daemon render updates so we can invalidate images.
+        // Subscribe to daemon render updates so we can invalidate images.
         if (RunbookPlugin.Instance?.Daemon is { } daemon)
         {
-            daemon.RenderUpdated += (_, _) =>
-            {
-                // Invalidate all slot images. (Per-action invalidation is better if supported.)
-                this.ActionImageChanged();
-            };
+            daemon.RenderUpdated += (_, _) => ActionImageChanged();
+            daemon.StateChanged += (_, _) => ActionImageChanged();
         }
 
         return base.OnLoad();
@@ -44,7 +41,18 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
         if (!int.TryParse(actionParameter, out var slot))
             return null;
 
-        var render = RunbookPlugin.Instance?.Daemon.Render;
+        var daemon = RunbookPlugin.Instance?.Daemon;
+
+        // OFFLINE tile when daemon is not connected.
+        if (daemon is null || daemon.State != Daemon.ConnectionState.Connected)
+        {
+            using var offBb = new BitmapBuilder(imageSize);
+            offBb.Clear(BitmapColor.Black);
+            offBb.DrawText("OFFLINE");
+            return offBb.ToImage();
+        }
+
+        var render = daemon.Render;
         var slotRender = render?.Keypad?.Slots?.FirstOrDefault(s => s.Slot == slot);
 
         var label = slotRender?.Label ?? "—";
@@ -52,25 +60,16 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
         var armed = slotRender?.Armed ?? false;
 
         using var bb = new BitmapBuilder(imageSize);
-        bb.Clear();
+        bb.Clear(armed ? new BitmapColor(0, 102, 204) : BitmapColor.Black);
 
-        // Draw background if armed.
-        if (armed)
-        {
-            var armedColor = new BitmapColor(0, 102, 204); // A nice blue
-            bb.FillRectangle(0, 0, imageSize.Width, imageSize.Height, armedColor);
-        }
-
-        // Labels.
         var textColor = armed ? BitmapColor.White : new BitmapColor(200, 200, 200);
 
-        bb.DrawText(label, x: 5, y: 5, width: imageSize.Width - 10, height: imageSize.Height / 2,
-                    color: textColor, fontSize: 18);
+        // SDK guidance: do NOT force fontSize — the runtime picks best size per device.
+        bb.DrawText(label, color: textColor);
 
         if (!string.IsNullOrEmpty(sub))
         {
-            bb.DrawText(sub!, x: 5, y: imageSize.Height / 2, width: imageSize.Width - 10, height: imageSize.Height / 2 - 5,
-                        color: textColor, fontSize: 13);
+            bb.DrawText(sub!, color: textColor);
         }
 
         // Border for armed state.

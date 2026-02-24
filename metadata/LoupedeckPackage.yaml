@@ -1,0 +1,12 @@
+# Logi Actions / Loupedeck plugin package manifest
+#
+# This repo is designed for the Logi Actions SDK (C#).
+# See docs: https://logitech.github.io/actions-sdk-docs/
+
+title: Runbook
+version: 0.1.0
+author: runbook-rs
+website: https://github.com/runbook-rs
+
+# pluginCapabilities is for install-time flags only (admin install, close app, etc).
+# hasNoApplication / UsesApplicationApiOnly are Plugin-class flags set in code.
