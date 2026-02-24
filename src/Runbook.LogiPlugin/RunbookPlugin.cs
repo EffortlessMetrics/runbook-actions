@@ -33,14 +33,14 @@ public sealed class RunbookPlugin : Plugin
         {
             var status = state switch
             {
-                Daemon.ConnectionState.Connected => PluginStatus.Normal,
-                Daemon.ConnectionState.Connecting => PluginStatus.Warning,
+                Runbook.Daemon.ConnectionState.Connected => PluginStatus.Normal,
+                Runbook.Daemon.ConnectionState.Connecting => PluginStatus.Warning,
                 _ => PluginStatus.Error
             };
             var message = state switch
             {
-                Daemon.ConnectionState.Connected => "Connected to runbookd",
-                Daemon.ConnectionState.Connecting => "Connecting to runbookd...",
+                Runbook.Daemon.ConnectionState.Connected => "Connected to runbookd",
+                Runbook.Daemon.ConnectionState.Connecting => "Connecting to runbookd...",
                 _ => "Daemon offline"
             };
 
