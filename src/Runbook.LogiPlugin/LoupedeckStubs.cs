@@ -4,18 +4,18 @@ namespace Loupedeck;
 
 /// <summary>
 /// Loupedeck SDK stubs for compilation without the real SDK assemblies.
-/// These are the minimum surface required by the plugin's code.
 /// Replace with real SDK references when packaging for distribution.
 /// </summary>
 
 public abstract class Plugin
 {
-    public virtual bool UsesApplicationApiOnly => false;
     public virtual void Load() { }
     public virtual void Unload() { }
     protected void OnPluginStatusChanged(PluginStatus status, string message, string? url = null) { }
     public void ActionImageChanged() { }
     public void ActionImageChanged(string actionName, string parameter) { }
+    protected bool TryGetPluginSetting(string key, out string? value) { value = null; return false; }
+    protected void SetPluginSetting(string key, string value) { }
 }
 
 public enum PluginStatus
@@ -51,6 +51,7 @@ public abstract class PluginDynamicAdjustment
 
 public abstract class ClientApplication
 {
+    protected virtual string[] GetProcessNames() => Array.Empty<string>();
     protected void AddProcess(string processName, string? bundleId = null) { }
 }
 
@@ -60,15 +61,12 @@ public struct PluginImageSize
     public int Height => 60;
 }
 
-public class BitmapImage
-{
-}
+public class BitmapImage { }
 
 public class BitmapColor
 {
     public static readonly BitmapColor White = new(255, 255, 255);
     public static readonly BitmapColor Black = new(0, 0, 0);
-
     public BitmapColor(byte r, byte g, byte b, byte a = 255) { }
 }
 

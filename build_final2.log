@@ -1,0 +1,19 @@
+  Determining projects to restore...
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4 [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+  All projects are up-to-date for restore.
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w
+  Runbook.LogiPlugin -> H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\bin\Debug\net8.0\Runbook.dll
+  Runbook.LogiPlugin.Tests -> H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\bin\Debug\net9.0\Runbook.LogiPlugin.Tests.dll
+
+Build succeeded.
+
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4 [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.94

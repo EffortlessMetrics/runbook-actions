@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -11,17 +12,19 @@ public enum ConnectionState
 {
     Disconnected,
     Connecting,
-    Connected
+    Connected,
+    ProtocolError
 }
 
 /// <summary>
 /// WebSocket client to runbookd.
 ///
 /// Default endpoint: ws://127.0.0.1:29381/ws
-/// Override via RUNBOOKD_WS environment variable.
+/// Override via plugin settings (daemon_url) or RUNBOOKD_WS env var.
 ///
 /// Connection lifecycle:
-///   Connecting → Connected → (recv loop) → Disconnected → backoff → Connecting …
+///   Connecting → Connected (hello_ack) → recv loop → Disconnected → backoff → …
+///   Connecting → ProtocolError (bad hello_ack) → stop
 /// </summary>
 public sealed class DaemonClient : IAsyncDisposable
 {
@@ -32,10 +35,21 @@ public sealed class DaemonClient : IAsyncDisposable
     private ConnectionState _state = ConnectionState.Disconnected;
     private bool _disposed;
 
+    // Adjustment coalescing.
+    private int _pendingRollerDelta;
+    private int _pendingDialDelta;
+    private Timer? _coalesceTimer;
+
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
 
     public Render.RenderModel? Render { get; private set; }
+
+    /// <summary>Daemon URL. Set via ConfigureDaemonUrl before ConnectAsync.</summary>
+    public string DaemonUrl { get; set; } = "ws://127.0.0.1:29381/ws";
+
+    /// <summary>Client ID persisted via plugin settings.</summary>
+    public string ClientId { get; set; } = Guid.NewGuid().ToString("N")[..8];
 
     public ConnectionState State
     {
@@ -54,7 +68,13 @@ public sealed class DaemonClient : IAsyncDisposable
     {
         if (_disposed) return Task.CompletedTask;
 
+        // Override from env var if present.
+        var envUrl = Environment.GetEnvironmentVariable("RUNBOOKD_WS");
+        if (!string.IsNullOrEmpty(envUrl))
+            DaemonUrl = envUrl;
+
         _cts = new CancellationTokenSource();
+        _coalesceTimer = new Timer(FlushCoalescedAdjustments, null, 16, 16);
         _ = Task.Run(MaintainConnectionAsync);
         return Task.CompletedTask;
     }
@@ -72,22 +92,37 @@ public sealed class DaemonClient : IAsyncDisposable
                 _ws = new ClientWebSocket();
                 _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(KeepAliveSeconds);
 
-                var url = Environment.GetEnvironmentVariable("RUNBOOKD_WS")
-                          ?? "ws://127.0.0.1:29381/ws";
-
-                await _ws.ConnectAsync(new Uri(url), _cts.Token);
-
-                State = ConnectionState.Connected;
-                backoff = TimeSpan.FromMilliseconds(500); // Reset on success.
+                await _ws.ConnectAsync(new Uri(DaemonUrl), _cts.Token);
 
                 // Hello handshake.
-                await SendAsync(new
+                await SendRawAsync(new
                 {
                     type = "hello",
                     client = "logi",
                     protocol = 1,
-                    version = "0.1.0"
+                    version = "0.1.0",
+                    client_id = ClientId
                 });
+
+                // Wait for hello_ack (timeout 5s).
+                var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
+                if (ackJson is not null)
+                {
+                    using var doc = JsonDocument.Parse(ackJson);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("type", out var t) && t.GetString() == "hello_ack")
+                    {
+                        if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
+                        {
+                            State = ConnectionState.ProtocolError;
+                            return; // Stop reconnecting.
+                        }
+                        // Handshake OK.
+                    }
+                }
+
+                State = ConnectionState.Connected;
+                backoff = TimeSpan.FromMilliseconds(500);
 
                 await ReceiveLoopAsync();
             }
@@ -101,12 +136,14 @@ public sealed class DaemonClient : IAsyncDisposable
             }
             finally
             {
-                try { _ws?.Dispose(); } catch { }
+                try { _ws?.Dispose(); }
+                catch { }
                 _ws = null;
-                if (!_disposed) State = ConnectionState.Disconnected;
+                if (!_disposed && _state != ConnectionState.ProtocolError)
+                    State = ConnectionState.Disconnected;
             }
 
-            if (_disposed) break;
+            if (_disposed || _state == ConnectionState.ProtocolError) break;
 
             try
             {
@@ -121,16 +158,44 @@ public sealed class DaemonClient : IAsyncDisposable
         }
     }
 
+    // ── Public send methods ──────────────────────────────────────────
+
     public Task SendKeypadPressAsync(int slot)
-        => SendAsync(new { type = "keypad_press", slot });
+        => SendRawAsync(new { type = "keypad_press", slot });
 
     public Task SendDialpadButtonPressAsync(string button)
-        => SendAsync(new { type = "dialpad_button_press", button });
+        => SendRawAsync(new { type = "dialpad_button_press", button });
 
+    public Task SendPageAsync(string direction)
+        => SendRawAsync(new { type = "page", direction });
+
+    /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
+    public void EnqueueAdjustment(string kind, int delta)
+    {
+        if (kind == "roller")
+            Interlocked.Add(ref _pendingRollerDelta, delta);
+        else
+            Interlocked.Add(ref _pendingDialDelta, delta);
+    }
+
+    /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
     public Task SendAdjustmentAsync(string kind, int delta)
-        => SendAsync(new { type = "adjustment", kind, delta });
+        => SendRawAsync(new { type = "adjustment", kind, delta });
 
-    private async Task SendAsync(object message)
+    // ── Coalescing timer ─────────────────────────────────────────────
+
+    private void FlushCoalescedAdjustments(object? _)
+    {
+        var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
+        var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
+
+        if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
+        if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
+    }
+
+    // ── Internal send/receive ────────────────────────────────────────
+
+    private async Task SendRawAsync(object message)
     {
         if (_ws is null || _ws.State != WebSocketState.Open)
             return;
@@ -148,19 +213,42 @@ public sealed class DaemonClient : IAsyncDisposable
         }
     }
 
+    /// <summary>Receive one complete WS message, handling multi-frame.</summary>
+    private async Task<string?> ReceiveOneMessageAsync(TimeSpan? timeout = null)
+    {
+        if (_ws is null) return null;
+
+        using var cts = timeout.HasValue
+            ? CancellationTokenSource.CreateLinkedTokenSource(_cts?.Token ?? CancellationToken.None)
+            : null;
+        if (cts is not null) cts.CancelAfter(timeout!.Value);
+        var token = cts?.Token ?? _cts?.Token ?? CancellationToken.None;
+
+        var ms = new MemoryStream();
+        var buffer = new byte[4096];
+
+        while (true)
+        {
+            var result = await _ws.ReceiveAsync(buffer, token);
+            if (result.MessageType == WebSocketMessageType.Close)
+                return null;
+
+            ms.Write(buffer, 0, result.Count);
+            if (result.EndOfMessage)
+                break;
+        }
+
+        return Encoding.UTF8.GetString(ms.ToArray());
+    }
+
     private async Task ReceiveLoopAsync()
     {
         if (_ws is null) return;
 
-        var buffer = new byte[64 * 1024];
-
         while (_ws.State == WebSocketState.Open && _cts is { IsCancellationRequested: false })
         {
-            var result = await _ws.ReceiveAsync(buffer, _cts.Token);
-            if (result.MessageType == WebSocketMessageType.Close)
-                break;
-
-            var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            var json = await ReceiveOneMessageAsync();
+            if (json is null) break;
 
             try
             {
@@ -181,10 +269,14 @@ public sealed class DaemonClient : IAsyncDisposable
         }
     }
 
+    // ── Lifecycle ────────────────────────────────────────────────────
+
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        try { _cts?.Cancel(); } catch { }
+        _coalesceTimer?.Dispose();
+        try { _cts?.Cancel(); }
+        catch { }
 
         if (_ws is not null)
         {

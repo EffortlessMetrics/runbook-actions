@@ -1,0 +1,1 @@
+{"type":"render","agent_state":"idle","armed":{"id":"prep_pr","label":"Prep PR","command":"/runbook:prep-pr"},"keypad":{"slots":[{"slot":0,"label":"Prep PR","sublabel":"/prep-pr","armed":true},{"slot":1,"label":"Break Task","sublabel":"/break","armed":false}]}}

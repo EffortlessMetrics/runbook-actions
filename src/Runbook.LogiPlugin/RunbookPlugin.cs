@@ -1,7 +1,6 @@
 using System;
 
 // These namespaces come from the Logi Actions / Loupedeck SDK.
-// The exact assembly references depend on how you install the SDK.
 using Loupedeck;
 
 namespace Runbook;
@@ -24,14 +23,25 @@ public sealed class RunbookPlugin : Plugin
 
     internal Daemon.DaemonClient Daemon { get; private set; } = null!;
 
-    // SDK flags — these replace the incorrect YAML pluginCapabilities.
-    public override bool UsesApplicationApiOnly => true;
-
     public override void Load()
     {
         Instance = this;
 
         Daemon = new Daemon.DaemonClient();
+
+        // Plugin settings → daemon config.
+        if (TryGetPluginSetting("daemon_url", out var url) && !string.IsNullOrEmpty(url))
+            Daemon.DaemonUrl = url!;
+
+        if (TryGetPluginSetting("client_id", out var cid) && !string.IsNullOrEmpty(cid))
+        {
+            Daemon.ClientId = cid!;
+        }
+        else
+        {
+            // Persist a generated client_id on first run.
+            SetPluginSetting("client_id", Daemon.ClientId);
+        }
 
         // Connection health → Plugin Status badge in Logi Options+.
         Daemon.StateChanged += OnDaemonStateChanged;
@@ -57,12 +67,14 @@ public sealed class RunbookPlugin : Plugin
         var status = state switch
         {
             Runbook.Daemon.ConnectionState.Connected => PluginStatus.Normal,
+            Runbook.Daemon.ConnectionState.ProtocolError => PluginStatus.Error,
             _ => PluginStatus.Warning
         };
         var message = state switch
         {
             Runbook.Daemon.ConnectionState.Connected => "Connected to runbookd",
-            Runbook.Daemon.ConnectionState.Connecting => "Connecting to runbookd…",
+            Runbook.Daemon.ConnectionState.Connecting => "Connecting to runbookd\u2026",
+            Runbook.Daemon.ConnectionState.ProtocolError => "Protocol mismatch \u2014 update plugin or daemon",
             _ => "Daemon offline"
         };
 
@@ -74,7 +86,6 @@ public sealed class RunbookPlugin : Plugin
 
     private void InvalidateAllSlots()
     {
-        // null = invalidate all instances of this action.
         ActionImageChanged();
     }
 }
