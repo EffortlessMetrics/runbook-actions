@@ -51,18 +51,33 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
         var sub = slotRender?.Sublabel;
         var armed = slotRender?.Armed ?? false;
 
-        // The SDK typically provides a BitmapBuilder helper.
-        // Replace this with the SDK's actual drawing API.
-        var bb = new BitmapBuilder(imageSize);
+        using var bb = new BitmapBuilder(imageSize);
         bb.Clear();
-        bb.DrawText(label, x: 0, y: 0, width: imageSize.Width, height: imageSize.Height / 2, fontSize: 16);
-        if (!string.IsNullOrEmpty(sub))
-        {
-            bb.DrawText(sub!, x: 0, y: imageSize.Height / 2, width: imageSize.Width, height: imageSize.Height / 2, fontSize: 12);
-        }
+
+        // Draw background if armed.
         if (armed)
         {
-            bb.DrawRectangle(0, 0, imageSize.Width - 1, imageSize.Height - 1);
+            var armedColor = new BitmapColor(0, 102, 204); // A nice blue
+            bb.FillRectangle(0, 0, imageSize.Width, imageSize.Height, armedColor);
+        }
+
+        // Labels.
+        var textColor = armed ? BitmapColor.White : new BitmapColor(200, 200, 200);
+        
+        bb.DrawText(label, x: 5, y: 5, width: imageSize.Width - 10, height: imageSize.Height / 2, 
+                    color: textColor, fontSize: 18);
+
+        if (!string.IsNullOrEmpty(sub))
+        {
+            bb.DrawText(sub!, x: 5, y: imageSize.Height / 2, width: imageSize.Width - 10, height: imageSize.Height / 2 - 5,
+                        color: textColor, fontSize: 13);
+        }
+
+        // Border for armed state.
+        if (armed)
+        {
+            bb.DrawRectangle(0, 0, imageSize.Width - 1, imageSize.Height - 1, BitmapColor.White);
+            bb.DrawRectangle(1, 1, imageSize.Width - 3, imageSize.Height - 3, BitmapColor.White);
         }
 
         return bb.ToImage();

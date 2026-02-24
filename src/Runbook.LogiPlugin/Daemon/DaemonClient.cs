@@ -7,6 +7,13 @@ using System.Threading.Tasks;
 
 namespace Runbook.Daemon;
 
+public enum ConnectionState
+{
+    Disconnected,
+    Connecting,
+    Connected
+}
+
 /// <summary>
 /// WebSocket client to runbookd.
 ///
@@ -17,34 +24,80 @@ public sealed class DaemonClient : IAsyncDisposable
 {
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
+    private ConnectionState _state = ConnectionState.Disconnected;
+    private bool _askedToDisconnect = false;
 
     public event EventHandler? RenderUpdated;
+    public event EventHandler<ConnectionState>? StateChanged;
 
     public Render.RenderModel? Render { get; private set; }
 
+    public ConnectionState State
+    {
+        get => _state;
+        private set
+        {
+            if (_state != value)
+            {
+                _state = value;
+                StateChanged?.Invoke(this, _state);
+            }
+        }
+    }
+
     public async Task ConnectAsync()
     {
-        if (_ws is not null)
-            return;
+        if (_askedToDisconnect) return;
 
         _cts = new CancellationTokenSource();
-        _ws = new ClientWebSocket();
+        _ = Task.Run(MaintainConnectionAsync, _cts.Token);
+    }
 
-        var url = Environment.GetEnvironmentVariable("RUNBOOKD_WS")
-                  ?? "ws://127.0.0.1:29381/ws";
+    private async Task MaintainConnectionAsync()
+    {
+        var backoff = TimeSpan.FromSeconds(1);
+        var maxBackoff = TimeSpan.FromSeconds(30);
 
-        await _ws.ConnectAsync(new Uri(url), _cts.Token);
-
-        // Hello handshake (best-effort; daemon tolerates duplicates).
-        await SendAsync(new
+        while (_cts != null && !_cts.IsCancellationRequested)
         {
-            type = "hello",
-            client = "logi",
-            protocol = 1,
-            version = "0.1.0"
-        });
+            try
+            {
+                State = ConnectionState.Connecting;
+                _ws = new ClientWebSocket();
 
-        _ = Task.Run(ReceiveLoopAsync);
+                var url = Environment.GetEnvironmentVariable("RUNBOOKD_WS")
+                          ?? "ws://127.0.0.1:29381/ws";
+
+                await _ws.ConnectAsync(new Uri(url), _cts.Token);
+
+                State = ConnectionState.Connected;
+                backoff = TimeSpan.FromSeconds(1); // Reset backoff on success
+
+                // Hello handshake.
+                await SendAsync(new
+                {
+                    type = "hello",
+                    client = "logi",
+                    protocol = 1,
+                    version = "0.1.0"
+                });
+
+                await ReceiveLoopAsync();
+            }
+            catch (Exception)
+            {
+                State = ConnectionState.Disconnected;
+                if (_askedToDisconnect) break;
+
+                await Task.Delay(backoff, _cts?.Token ?? CancellationToken.None);
+                backoff = TimeSpan.FromTicks(Math.Min(maxBackoff.Ticks, backoff.Ticks * 2));
+            }
+            finally
+            {
+                _ws?.Dispose();
+                _ws = null;
+            }
+        }
     }
 
     public async Task SendKeypadPressAsync(int slot)
@@ -58,12 +111,16 @@ public sealed class DaemonClient : IAsyncDisposable
 
     private async Task SendAsync(object message)
     {
-        if (_ws is null)
+        if (_ws == null || _ws.State != WebSocketState.Open)
             return;
 
-        var json = JsonSerializer.Serialize(message);
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, _cts!.Token);
+        try
+        {
+            var json = JsonSerializer.Serialize(message);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            await _ws.SendAsync(bytes, WebSocketMessageType.Text, true, _cts?.Token ?? CancellationToken.None);
+        }
+        catch { /* Best effort */ }
     }
 
     private async Task ReceiveLoopAsync()
@@ -73,9 +130,9 @@ public sealed class DaemonClient : IAsyncDisposable
 
         var buffer = new byte[64 * 1024];
 
-        while (_ws.State == WebSocketState.Open)
+        while (_ws.State == WebSocketState.Open && (_cts?.IsCancellationRequested == false))
         {
-            var result = await _ws.ReceiveAsync(buffer, _cts!.Token);
+            var result = await _ws.ReceiveAsync(buffer, _cts.Token);
             if (result.MessageType == WebSocketMessageType.Close)
                 break;
 
@@ -103,6 +160,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _askedToDisconnect = true;
         try
         {
             _cts?.Cancel();
@@ -123,5 +181,6 @@ public sealed class DaemonClient : IAsyncDisposable
 
         _ws = null;
         _cts = null;
+        State = ConnectionState.Disconnected;
     }
 }

@@ -28,15 +28,32 @@ public sealed class RunbookPlugin : Plugin
     {
         Instance = this;
 
-        // Plugin metadata (shown in Logi Options+).
-        // TODO: set icon/name/description via the SDK's Info model.
-
         Daemon = new Daemon.DaemonClient();
+        Daemon.StateChanged += (_, state) =>
+        {
+            var status = state switch
+            {
+                Daemon.ConnectionState.Connected => PluginStatus.Normal,
+                Daemon.ConnectionState.Connecting => PluginStatus.Warning,
+                _ => PluginStatus.Error
+            };
+            var message = state switch
+            {
+                Daemon.ConnectionState.Connected => "Connected to runbookd",
+                Daemon.ConnectionState.Connecting => "Connecting to runbookd...",
+                _ => "Daemon offline"
+            };
+
+            this.OnStatusChanged(status, message);
+        };
+
         Daemon.RenderUpdated += (_, _) =>
         {
-            // Invalidate all action images.
-            // The SDK provides a way to notify that images changed.
-            // TODO: call ActionImageChanged("0".."8") for keypad slots.
+            // Invalidate all keypad slot images when the render model changes.
+            for (var i = 0; i < 9; i++)
+            {
+                this.ActionImageChanged("Runbook Slot", i.ToString());
+            }
         };
 
         _ = Daemon.ConnectAsync();
