@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <AssemblyName>Runbook</AssemblyName>
+    <RootNamespace>Runbook</RootNamespace>
+
+    <!-- The Logi Actions SDK tooling expects a class library that is packaged into an .lplug4. -->
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The Logi Actions SDK ships its own assemblies.
+      How you reference them depends on your environment:
+
+      - If the SDK provides NuGet packages, add PackageReference(s) here.
+      - If it provides local DLLs, add Reference Include with HintPath.
+
+      See: https://logitech.github.io/actions-sdk-docs/
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.2" />
+  </ItemGroup>
+
+</Project>
