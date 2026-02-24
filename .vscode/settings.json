@@ -1,14 +1,64 @@
 {
   "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit"
-  },
+  "editor.formatOnSaveMode": "file",
+
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,
-  "omnisharp.enableRoslynAnalyzers": true,
-  "omnisharp.useGlobalMono": "never",
-  "dotnet.server.useOmnisharp": false,
-  "csharp.inlayHints.enableInlayHintsForParameters": true,
-  "csharp.inlayHints.enableInlayHintsForTypes": true
+
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/.idea": true
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/.idea": true
+  },
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/bin/**": true,
+    "**/obj/**": true
+  },
+
+  "dotnet.automaticallyCreateSolutionInWorkspace": false,
+
+  "dotnet.formatting.organizeImportsOnFormat": true,
+
+  "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
+  "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "openFiles",
+
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+
+  "dotnet.navigation.navigateToSourceLinkAndEmbeddedSources": true,
+  "dotnet.navigation.navigateToDecompiledSources": true,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": true
+  },
+
+  "oxc.enable.oxfmt": true,
+  "oxc.enable.oxlint": true,
+  "oxc.lint.run": "onSave",
+  "oxc.fixKind": "safe_fix",
+
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "dependi.csharp.enabled": true,
+  "dependi.csharp.lockFileEnabled": true,
+  "dependi.vulnerability.enabled": true,
+  "dependi.vulnerability.ghsa.enabled": false
 }
