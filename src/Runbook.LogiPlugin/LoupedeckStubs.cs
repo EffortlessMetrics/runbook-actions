@@ -20,7 +20,7 @@ public enum PluginStatus
 public abstract class PluginDynamicCommand
 {
     public string Name { get; set; } = string.Empty;
-    protected PluginDynamicCommand(string displayName, string description, string groupName) 
+    protected PluginDynamicCommand(string displayName, string description, string groupName)
     {
         Name = displayName;
     }

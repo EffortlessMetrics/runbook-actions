@@ -63,8 +63,8 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
 
         // Labels.
         var textColor = armed ? BitmapColor.White : new BitmapColor(200, 200, 200);
-        
-        bb.DrawText(label, x: 5, y: 5, width: imageSize.Width - 10, height: imageSize.Height / 2, 
+
+        bb.DrawText(label, x: 5, y: 5, width: imageSize.Width - 10, height: imageSize.Height / 2,
                     color: textColor, fontSize: 18);
 
         if (!string.IsNullOrEmpty(sub))

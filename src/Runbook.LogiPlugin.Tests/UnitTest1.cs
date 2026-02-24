@@ -1,4 +1,4 @@
-﻿namespace Runbook.LogiPlugin.Tests;
+namespace Runbook.LogiPlugin.Tests;
 
 public class UnitTest1
 {

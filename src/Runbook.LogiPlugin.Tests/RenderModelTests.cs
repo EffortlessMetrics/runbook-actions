@@ -37,7 +37,7 @@ public class RenderModelTests
         model.Should().NotBeNull();
         model!.Type.Should().Be("render");
         model.AgentState.Should().Be("idle");
-        
+
         model.Armed.Should().NotBeNull();
         model.Armed!.Id.Should().Be("prep_pr");
         model.Armed.Label.Should().Be("Prep PR");
@@ -45,14 +45,14 @@ public class RenderModelTests
 
         model.Keypad.Should().NotBeNull();
         model.Keypad.Slots.Should().HaveCount(1);
-        
+
         var slot = model.Keypad.Slots[0];
         slot.Slot.Should().Be(1);
         slot.Label.Should().Be("Break Task");
         slot.Sublabel.Should().Be("break");
         slot.Armed.Should().BeTrue();
     }
-    
+
     [Fact]
     public void Should_Handle_Missing_Optional_Fields()
     {
