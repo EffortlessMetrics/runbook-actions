@@ -25,7 +25,7 @@ public class ThreadSafetyBehaviors
     // ── Scenario 7: Concurrent rendering ─────────────────────────────
 
     [Fact]
-    public void Given_Concurrent_Render_Calls_Should_Not_Corrupt_Cache()
+    public async Task Given_Concurrent_Render_Calls_Should_Not_Corrupt_Cache()
     {
         KeyRenderer.InvalidateCache();
         var size = new PluginImageSize();
@@ -43,11 +43,11 @@ public class ThreadSafetyBehaviors
             });
         }
 
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
     }
 
     [Fact]
-    public void Given_Cache_Invalidation_During_Render_Should_Not_Throw()
+    public async Task Given_Cache_Invalidation_During_Render_Should_Not_Throw()
     {
         var size = new PluginImageSize();
 
@@ -77,8 +77,8 @@ public class ThreadSafetyBehaviors
             }
         }
 
-        var act = () => Task.WaitAll(tasks);
-        act.Should().NotThrow("cache must be thread-safe");
+        Func<Task> act = async () => await Task.WhenAll(tasks);
+        await act.Should().NotThrowAsync("cache must be thread-safe");
     }
 
     [Fact]

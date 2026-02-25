@@ -1,0 +1,7 @@
+{
+  "type": "terminals_snapshot",
+  "terminals": [
+    { "index": 0, "name": "bash", "session_tag": "uuid-1234" }
+  ],
+  "active_index": 0
+}

@@ -108,21 +108,36 @@ public sealed class DaemonClient : IAsyncDisposable
                 });
 
                 // Wait for hello_ack (timeout 5s).
-                var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
-                if (ackJson is not null)
+                try
                 {
-                    using var doc = JsonDocument.Parse(ackJson);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("type", out var t) && t.GetString() == "hello_ack")
+                    var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
+                    if (ackJson is not null)
                     {
-                        if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
+                        using var doc = JsonDocument.Parse(ackJson);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("type", out var t) && t.GetString() == "hello_ack")
                         {
-                            ProtocolErrorDetail = $"plugin=1 daemon={p.GetInt32()}";
-                            State = ConnectionState.ProtocolError;
-                            return; // Stop reconnecting.
+                            if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
+                            {
+                                ProtocolErrorDetail = $"plugin=1 daemon={p.GetInt32()}";
+                                State = ConnectionState.ProtocolError;
+                                return; // Stop reconnecting.
+                            }
+                            // Handshake OK.
                         }
-                        // Handshake OK.
+                        else
+                        {
+                            continue; // Invalid response type, retry
+                        }
                     }
+                    else
+                    {
+                        continue; // Connection closed or timeout returning null, retry
+                    }
+                }
+                catch (OperationCanceledException) when (_cts is { IsCancellationRequested: false })
+                {
+                    continue; // Handshake timeout, retry without breaking outer loop
                 }
 
                 State = ConnectionState.Connected;
@@ -130,7 +145,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
                 await ReceiveLoopAsync();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (_cts is { IsCancellationRequested: true })
             {
                 break;
             }

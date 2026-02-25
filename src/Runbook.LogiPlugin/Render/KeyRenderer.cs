@@ -8,7 +8,7 @@ namespace Runbook.Render;
 /// </summary>
 public static class KeyRenderer
 {
-    private record struct CacheKey(int Slot, string Label, string? Sublabel, bool Armed, bool Offline);
+    private record struct CacheKey(int Slot, PluginImageSize Size, string Label, string? Sublabel, bool Armed, bool Offline);
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<CacheKey, BitmapImage> _cache = new();
 
@@ -17,14 +17,14 @@ public static class KeyRenderer
         PluginImageSize size, int slot,
         string label, string? sublabel, bool armed)
     {
-        var key = new CacheKey(slot, label, sublabel, armed, false);
+        var key = new CacheKey(slot, size, label, sublabel, armed, false);
         return _cache.GetOrAdd(key, _ => DrawSlot(size, label, sublabel, armed));
     }
 
     /// <summary>Render the OFFLINE tile.</summary>
     public static BitmapImage RenderOffline(PluginImageSize size)
     {
-        var key = new CacheKey(-1, "OFFLINE", null, false, true);
+        var key = new CacheKey(-1, size, "OFFLINE", null, false, true);
         return _cache.GetOrAdd(key, _ =>
         {
             using var bb = new BitmapBuilder(size);

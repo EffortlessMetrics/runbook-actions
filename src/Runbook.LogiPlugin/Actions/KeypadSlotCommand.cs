@@ -17,22 +17,12 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
 
     protected override bool OnLoad()
     {
-        if (RunbookPlugin.Instance?.Daemon is { } daemon)
-        {
-            daemon.RenderUpdated += (_, _) => ActionImageChanged();
-            daemon.StateChanged += (_, _) =>
-            {
-                Render.KeyRenderer.InvalidateCache();
-                ActionImageChanged();
-            };
-        }
-
         return base.OnLoad();
     }
 
     protected override void RunCommand(string actionParameter)
     {
-        if (!int.TryParse(actionParameter, out var slot))
+        if (!int.TryParse(actionParameter, out var slot) || slot < 0 || slot > 8)
             return;
 
         _ = RunbookPlugin.Instance?.Daemon.SendKeypadPressAsync(slot);
@@ -40,7 +30,7 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
 
     protected override BitmapImage? GetCommandImage(string actionParameter, PluginImageSize imageSize)
     {
-        if (!int.TryParse(actionParameter, out var slot))
+        if (!int.TryParse(actionParameter, out var slot) || slot < 0 || slot > 8)
             return null;
 
         var daemon = RunbookPlugin.Instance?.Daemon;

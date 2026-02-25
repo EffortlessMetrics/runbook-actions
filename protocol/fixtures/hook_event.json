@@ -1,0 +1,13 @@
+{
+  "type": "hook_event",
+  "session_id": "claude-run-xyz",
+  "session_tag": "uuid-1234",
+  "event_type": "PreToolUse",
+  "payload": {
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "deny",
+      "permissionDecisionReason": "rm -rf is blocked by policy"
+    }
+  }
+}

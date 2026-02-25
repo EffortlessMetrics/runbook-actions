@@ -1,0 +1,8 @@
+{
+  "type": "vscode_command",
+  "kind": "send_text",
+  "payload": {
+    "text": "/runbook:prep-pr",
+    "should_execute": true
+  }
+}
