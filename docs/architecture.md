@@ -13,14 +13,11 @@ The system runs on independent truth boundaries. **Never infer what you can read
 * **VS Code (`runbook-vscode`)**: Provides terminal arrays (`TerminalsSnapshot`), current focus index, and executes terminal keystrokes (`send_text`, `send_sequence`).
 * **Hardware (`runbook-actions`)**: Pure dumb rendering terminal and event dispatcher. It remembers absolutely nothing.
 
-## 2. Default UX: The Queue-Arming Model
+## 2. Default UX: Stage and Commit
 
-Because Claude officially recommends against pasting long prompts into the VS Code terminal (due to input truncation and terminal lag), the default arming style is a **Queue** tied to a Claude Plugin **Skill/Command**.
+Because Claude officially recommends against pasting long prompts into the VS Code terminal (due to input truncation and terminal lag), the default arming style is **Visible Staging** tied to a Claude Plugin **Skill/Command**.
 
-* **Keypad (Arm)**: Device sets `pending_prompt` internally on the daemon. UI renders `PENDING: <Task>`. No side-effect in VS Code natively.
-* **Dialpad (Commit)**: `Enter` causes the daemon to send `should_execute=true` pointing to the short skill command (e.g. `/runbook:prep-pr`).
-* **Dialpad (Cancel)**: `Esc` drops the pending prompt from the daemon without triggering editor escapes.
-* **Dialpad (Interrupt)**: `Ctrl+C` is always concave and directly targets the active terminal.
+**Dialpad keys are invariant passthrough** (Enter/Esc/Ctrl+C always send literal keys; never context-sensitive). **Keypad stages a visible Claude Code invocation** (e.g., `/runbook:prep-pr`) into the terminal input line without executing it. Staging and deselection are keypad-only behaviors; deselecting a prompt clears the input line using **Ctrl+U** and unhighlights the key. Enter executes whatever is currently in the input line.
 
 *(Optionally configurable is `arm_style: prefill`, explicitly degraded UX allowing manual terminal pasting that voids “Pending” truth for “Pasted” feedback).*
 
