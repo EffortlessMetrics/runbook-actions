@@ -74,7 +74,8 @@ public sealed class RunbookPlugin : Plugin
         {
             Runbook.Daemon.ConnectionState.Connected => "Connected to runbookd",
             Runbook.Daemon.ConnectionState.Connecting => "Connecting to runbookd\u2026",
-            Runbook.Daemon.ConnectionState.ProtocolError => "Protocol mismatch \u2014 update plugin or daemon",
+            Runbook.Daemon.ConnectionState.ProtocolError =>
+                $"Protocol mismatch ({Daemon.ProtocolErrorDetail ?? "unknown"}) \u2014 update plugin or daemon",
             _ => "Daemon offline"
         };
 

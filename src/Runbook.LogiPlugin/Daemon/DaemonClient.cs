@@ -51,6 +51,9 @@ public sealed class DaemonClient : IAsyncDisposable
     /// <summary>Client ID persisted via plugin settings.</summary>
     public string ClientId { get; set; } = Guid.NewGuid().ToString("N")[..8];
 
+    /// <summary>Human-readable detail when State == ProtocolError.</summary>
+    public string? ProtocolErrorDetail { get; private set; }
+
     public ConnectionState State
     {
         get => _state;
@@ -114,6 +117,7 @@ public sealed class DaemonClient : IAsyncDisposable
                     {
                         if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
                         {
+                            ProtocolErrorDetail = $"plugin=1 daemon={p.GetInt32()}";
                             State = ConnectionState.ProtocolError;
                             return; // Stop reconnecting.
                         }
