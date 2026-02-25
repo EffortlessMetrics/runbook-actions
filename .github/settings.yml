@@ -1,0 +1,27 @@
+repository:
+  # See https://github.com/probot/settings for all available options
+  name: runbook-actions
+  description: Logitech MX Creative Console plugin for Runbook
+  homepage: https://github.com/EffortlessMetrics/runbook-actions
+  topics: logitech, loupedeck, csharp, runbook, mx-creative-console
+  default_branch: main
+  has_issues: true
+  has_projects: false
+  has_wiki: false
+  has_downloads: true
+  allow_squash_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: true
+
+branches:
+  - name: main
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+      required_status_checks:
+        strict: true
+        contexts:
+          - build
+      enforce_admins: true

@@ -1,0 +1,126 @@
+Build started 2/24/2026 6:54:10 PM.
+     1>Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" on node 1 (Restore target(s)).
+     1>ValidateSolutionConfiguration:
+         Building solution configuration "Debug|Any CPU".
+       _GetAllRestoreProjectPathItems:
+         Determining projects to restore...
+       Restore:
+         X.509 certificate chain validation will use the default trust store selected by .NET for code signing.
+         X.509 certificate chain validation will use the default trust store selected by .NET for timestamping.
+         Assets file has not changed. Skipping assets file writing. Path: H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\obj\project.assets.json
+         Restored H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj (in 40 ms).
+     1>H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4 [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+     1>H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+         Assets file has not changed. Skipping assets file writing. Path: H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\obj\project.assets.json
+         Restored H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj (in 57 ms).
+         
+         NuGet Config files used:
+             C:\Users\steven\AppData\Roaming\NuGet\NuGet.Config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.FallbackLocation.config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.Offline.config
+         
+         Feeds used:
+             https://api.nuget.org/v3/index.json
+             C:\Program Files (x86)\Microsoft SDKs\NuGetPackages\
+         All projects are up-to-date for restore.
+     1>Done Building Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" (Restore target(s)).
+   1:2>Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" on node 1 (VSTest target(s)).
+     1>ValidateSolutionConfiguration:
+         Building solution configuration "Debug|Any CPU".
+   1:2>Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" (1:2) is building "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (3:6) on node 2 (VSTest target(s)).
+     3>BuildProject:
+         Build started, please wait...
+   3:6>Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (3:6) is building "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (3:7) on node 2 (default targets).
+   3:7>Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (3:7) is building "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj" (2:9) on node 1 (default targets).
+     2>H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+     2>H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w
+     2>GenerateTargetFrameworkMonikerAttribute:
+       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
+       CoreGenerateAssemblyInfo:
+       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
+       _GenerateSourceLinkFile:
+         Source Link file 'obj\Debug\net8.0\Runbook.LogiPlugin.sourcelink.json' is up-to-date.
+       CoreCompile:
+       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
+       GenerateBuildDependencyFile:
+       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
+       CopyFilesToOutputDirectory:
+         Runbook.LogiPlugin -> H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\bin\Debug\net8.0\Runbook.dll
+     2>Done Building Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj" (default targets).
+     3>GenerateTargetFrameworkMonikerAttribute:
+       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
+       CoreGenerateAssemblyInfo:
+       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
+       _GenerateSourceLinkFile:
+         Source Link file 'obj\Debug\net9.0\Runbook.LogiPlugin.Tests.sourcelink.json' is up-to-date.
+       CoreCompile:
+       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
+       _CopyOutOfDateSourceItemsToOutputDirectory:
+       Skipping target "_CopyOutOfDateSourceItemsToOutputDirectory" because all output files are up-to-date with respect to the input files.
+       GenerateBuildDependencyFile:
+       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
+       GenerateBuildRuntimeConfigurationFiles:
+       Skipping target "GenerateBuildRuntimeConfigurationFiles" because all output files are up-to-date with respect to the input files.
+       CopyFilesToOutputDirectory:
+         Runbook.LogiPlugin.Tests -> H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\bin\Debug\net9.0\Runbook.LogiPlugin.Tests.dll
+     3>Done Building Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (default targets).
+     3>BuildProject:
+         Build completed.
+         
+Test run for H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\bin\Debug\net9.0\Runbook.LogiPlugin.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.13)
+[xUnit.net 00:00:00.06]   Discovering: Runbook.LogiPlugin.Tests
+[xUnit.net 00:00:00.09]   Discovered:  Runbook.LogiPlugin.Tests
+[xUnit.net 00:00:00.09]   Starting:    Runbook.LogiPlugin.Tests
+     Warning:
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.
+     A paid commercial license supports the development and continued increasing support of
+     Fluent Assertions users under both commercial and community licenses. Help us
+     keep Fluent Assertions at the forefront of unit testing.
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/
+  Passed Runbook.LogiPlugin.Tests.UnitTest1.Test1 [2 ms]
+  Passed Runbook.LogiPlugin.Tests.KeypadSlotCommandTests.Should_Have_Correct_Metadata [72 ms]
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.Render_Fixture_Is_Snake_Case [72 ms]
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.KeypadPress_Fixture_Is_Snake_Case [12 ms]
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.Hello_Fixture_Has_Required_Fields [1 ms]
+  Passed Runbook.LogiPlugin.Tests.RenderModelTests.Should_Deserialize_Valid_Render_Payload [87 ms]
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.Render_Fixture_Deserializes_Correctly [< 1 ms]
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.HelloAck_Fixture_Has_Required_Fields [< 1 ms]
+[xUnit.net 00:00:00.23]   Finished:    Runbook.LogiPlugin.Tests
+  Passed Runbook.LogiPlugin.Tests.ProtocolFixtureTests.DialpadButton_Fixture_Is_Snake_Case [< 1 ms]
+  Passed Runbook.LogiPlugin.Tests.RenderModelTests.Should_Handle_Missing_Optional_Fields [1 ms]
+
+Test Run Successful.
+Total tests: 10
+     Passed: 10
+ Total time: 0.6229 Seconds
+     3>Done Building Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (VSTest target(s)).
+     1>Done Building Project "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" (VSTest target(s)).
+
+Build succeeded.
+
+       "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" (Restore target) (1) ->
+       (Restore target) -> 
+         H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4 [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+         H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w [H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln]
+
+
+       "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.sln" (VSTest target) (1:2) ->
+       "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (VSTest target) (3:6) ->
+       "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj" (default target) (3:7) ->
+       "H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj" (default target) (2:9) ->
+       (ResolvePackageAssets target) -> 
+         H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+         H:\Code\Runbook\runbook-actions\src\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj : warning NU1903: Package 'System.Text.Json' 8.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-hh2w-p6rv-4g7w
+
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.49

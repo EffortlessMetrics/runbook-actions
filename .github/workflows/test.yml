@@ -1,0 +1,31 @@
+name: .NET CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore src/Runbook.LogiPlugin.sln
+
+      - name: Format Check
+        run: dotnet format src/Runbook.LogiPlugin.sln --verify-no-changes
+
+      - name: Build
+        run: dotnet build src/Runbook.LogiPlugin.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test src/Runbook.LogiPlugin.sln --no-build --verbosity normal --configuration Release

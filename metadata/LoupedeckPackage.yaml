@@ -1,0 +1,18 @@
+# Logi Actions SDK plugin manifest
+# Schema: https://logitech.github.io/actions-sdk-docs/
+
+type: plugin
+name: com.runbook.actions
+displayName: Runbook
+version: 0.1.0
+author: runbook-rs
+website: https://github.com/runbook-rs
+license: MIT
+licenseUrl: https://github.com/runbook-rs/runbook-actions/blob/main/LICENSE
+
+# Assembly name (without .dll) produced by dotnet publish.
+pluginFileName: Runbook
+
+# Platform output folders (relative to package root).
+pluginFolderWin: win
+# pluginFolderMac: mac  # uncomment when macOS build is added

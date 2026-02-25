@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    "EditorConfig.EditorConfig",
+    "oxc.oxc-vscode",
+    "fill-labs.dependi"
+  ]
+}

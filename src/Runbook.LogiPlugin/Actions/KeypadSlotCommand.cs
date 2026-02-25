@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 using Loupedeck;
@@ -18,13 +17,13 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
 
     protected override bool OnLoad()
     {
-        // Optional: subscribe to daemon render updates so we can invalidate images.
         if (RunbookPlugin.Instance?.Daemon is { } daemon)
         {
-            daemon.RenderUpdated += (_, _) =>
+            daemon.RenderUpdated += (_, _) => ActionImageChanged();
+            daemon.StateChanged += (_, _) =>
             {
-                // Invalidate all slot images. (Per-action invalidation is better if supported.)
-                this.ActionImageChanged();
+                Render.KeyRenderer.InvalidateCache();
+                ActionImageChanged();
             };
         }
 
@@ -44,27 +43,18 @@ public sealed class KeypadSlotCommand : PluginDynamicCommand
         if (!int.TryParse(actionParameter, out var slot))
             return null;
 
-        var render = RunbookPlugin.Instance?.Daemon.Render;
+        var daemon = RunbookPlugin.Instance?.Daemon;
+
+        if (daemon is null || daemon.State != Daemon.ConnectionState.Connected)
+            return Render.KeyRenderer.RenderOffline(imageSize);
+
+        var render = daemon.Render;
         var slotRender = render?.Keypad?.Slots?.FirstOrDefault(s => s.Slot == slot);
 
-        var label = slotRender?.Label ?? "—";
+        var label = slotRender?.Label ?? "\u2014";
         var sub = slotRender?.Sublabel;
         var armed = slotRender?.Armed ?? false;
 
-        // The SDK typically provides a BitmapBuilder helper.
-        // Replace this with the SDK's actual drawing API.
-        var bb = new BitmapBuilder(imageSize);
-        bb.Clear();
-        bb.DrawText(label, x: 0, y: 0, width: imageSize.Width, height: imageSize.Height / 2, fontSize: 16);
-        if (!string.IsNullOrEmpty(sub))
-        {
-            bb.DrawText(sub!, x: 0, y: imageSize.Height / 2, width: imageSize.Width, height: imageSize.Height / 2, fontSize: 12);
-        }
-        if (armed)
-        {
-            bb.DrawRectangle(0, 0, imageSize.Width - 1, imageSize.Height - 1);
-        }
-
-        return bb.ToImage();
+        return Render.KeyRenderer.RenderSlot(imageSize, slot, label, sub, armed);
     }
 }

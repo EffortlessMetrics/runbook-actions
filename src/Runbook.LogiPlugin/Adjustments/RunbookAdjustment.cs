@@ -16,10 +16,11 @@ public sealed class RunbookAdjustment : PluginDynamicAdjustment
 
     protected override void ApplyAdjustment(string actionParameter, int diff)
     {
-        // diff is signed, in detents.
         if (string.IsNullOrEmpty(actionParameter))
             return;
 
-        _ = RunbookPlugin.Instance?.Daemon.SendAdjustmentAsync(actionParameter, diff);
+        // Roller events are high-frequency: coalesce them.
+        // Dial uses direct send (optional fallback binding).
+        RunbookPlugin.Instance?.Daemon.EnqueueAdjustment(actionParameter, diff);
     }
 }

@@ -1,7 +1,6 @@
 using System;
 
 // These namespaces come from the Logi Actions / Loupedeck SDK.
-// The exact assembly references depend on how you install the SDK.
 using Loupedeck;
 
 namespace Runbook;
@@ -28,23 +27,66 @@ public sealed class RunbookPlugin : Plugin
     {
         Instance = this;
 
-        // Plugin metadata (shown in Logi Options+).
-        // TODO: set icon/name/description via the SDK's Info model.
-
         Daemon = new Daemon.DaemonClient();
-        Daemon.RenderUpdated += (_, _) =>
+
+        // Plugin settings → daemon config.
+        if (TryGetPluginSetting("daemon_url", out var url) && !string.IsNullOrEmpty(url))
+            Daemon.DaemonUrl = url!;
+
+        if (TryGetPluginSetting("client_id", out var cid) && !string.IsNullOrEmpty(cid))
         {
-            // Invalidate all action images.
-            // The SDK provides a way to notify that images changed.
-            // TODO: call ActionImageChanged("0".."8") for keypad slots.
-        };
+            Daemon.ClientId = cid!;
+        }
+        else
+        {
+            // Persist a generated client_id on first run.
+            SetPluginSetting("client_id", Daemon.ClientId);
+        }
+
+        // Connection health → Plugin Status badge in Logi Options+.
+        Daemon.StateChanged += OnDaemonStateChanged;
+
+        // Daemon render model changed → redraw LCD keys.
+        Daemon.RenderUpdated += (_, _) => InvalidateAllSlots();
 
         _ = Daemon.ConnectAsync();
     }
 
     public override void Unload()
     {
-        _ = Daemon.DisposeAsync();
+        if (Daemon is not null)
+        {
+            Daemon.StateChanged -= OnDaemonStateChanged;
+        }
+        _ = Daemon?.DisposeAsync();
         Instance = null;
+    }
+
+    private void OnDaemonStateChanged(object? sender, Runbook.Daemon.ConnectionState state)
+    {
+        var status = state switch
+        {
+            Runbook.Daemon.ConnectionState.Connected => PluginStatus.Normal,
+            Runbook.Daemon.ConnectionState.ProtocolError => PluginStatus.Error,
+            _ => PluginStatus.Warning
+        };
+        var message = state switch
+        {
+            Runbook.Daemon.ConnectionState.Connected => "Connected to runbookd",
+            Runbook.Daemon.ConnectionState.Connecting => "Connecting to runbookd\u2026",
+            Runbook.Daemon.ConnectionState.ProtocolError =>
+                $"Protocol mismatch ({Daemon.ProtocolErrorDetail ?? "unknown"}) \u2014 update plugin or daemon",
+            _ => "Daemon offline"
+        };
+
+        OnPluginStatusChanged(status, message, "https://github.com/runbook-rs");
+
+        // Redraw LCD keys on connect/disconnect so OFFLINE tile appears/disappears.
+        InvalidateAllSlots();
+    }
+
+    private void InvalidateAllSlots()
+    {
+        ActionImageChanged();
     }
 }
