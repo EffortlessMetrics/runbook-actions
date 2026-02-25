@@ -79,16 +79,16 @@ public class JsonRobustnessBehaviors
     }
 
     [Fact]
-    public void Given_Extra_Fields_In_Armed_Should_Preserve_Known()
+    public void Given_Extra_Fields_In_Pending_Prompt_Should_Preserve_Known()
     {
         var json = """
         {
             "type": "render",
             "agent_state": "idle",
-            "armed": {
+            "pending_prompt": {
                 "id": "a1",
                 "label": "Do It",
-                "command": "/cmd",
+                "style": "prefill",
                 "timeout_ms": 5000,
                 "priority": "high"
             }
@@ -97,10 +97,10 @@ public class JsonRobustnessBehaviors
 
         var model = JsonSerializer.Deserialize<RenderModel>(json);
 
-        model!.Armed.Should().NotBeNull();
-        model.Armed!.Id.Should().Be("a1");
-        model.Armed.Label.Should().Be("Do It");
-        model.Armed.Command.Should().Be("/cmd");
+        model!.PendingPrompt.Should().NotBeNull();
+        model.PendingPrompt!.Id.Should().Be("a1");
+        model.PendingPrompt.Label.Should().Be("Do It");
+        model.PendingPrompt.Style.Should().Be("prefill");
     }
 
     // ── Scenario 3: Wrong types ──────────────────────────────────────
@@ -150,9 +150,9 @@ public class JsonRobustnessBehaviors
     }
 
     [Fact]
-    public void Given_Armed_As_String_Should_Not_Crash()
+    public void Given_Pending_Prompt_As_String_Should_Not_Crash()
     {
-        var json = """{"type":"render","agent_state":"idle","armed":"not_an_object"}""";
+        var json = """{"type":"render","agent_state":"idle","pending_prompt":"not_an_object"}""";
 
         RenderModel? model = null;
         var act = () =>

@@ -20,10 +20,11 @@ public class RenderModelBehaviors
         {
             "type": "render",
             "agent_state": "working",
-            "armed": {
+            "hooks_mode": "active",
+            "pending_prompt": {
                 "id": "a1",
                 "label": "Do Something",
-                "command": "/cmd"
+                "style": "queue"
             },
             "keypad": {
                 "slots": [
@@ -39,23 +40,25 @@ public class RenderModelBehaviors
         model.Should().NotBeNull();
         model!.Type.Should().Be("render");
         model.AgentState.Should().Be("working");
-        model.Armed.Should().NotBeNull();
-        model.Armed!.Id.Should().Be("a1");
-        model.Armed.Label.Should().Be("Do Something");
-        model.Armed.Command.Should().Be("/cmd");
+        model.HooksMode.Should().Be("active");
+        model.PendingPrompt.Should().NotBeNull();
+        model.PendingPrompt!.Id.Should().Be("a1");
+        model.PendingPrompt.Label.Should().Be("Do Something");
+        model.PendingPrompt.Style.Should().Be("queue");
         model.Keypad.Slots.Should().HaveCount(2);
     }
 
     // ── Given missing optional fields ────────────────────────────────
 
     [Fact]
-    public void Given_No_Armed_Should_Deserialize_As_Null()
+    public void Given_No_Pending_Prompt_Should_Deserialize_As_Null()
     {
         var json = """{"type":"render","agent_state":"idle"}""";
 
         var model = JsonSerializer.Deserialize<RenderModel>(json);
 
-        model!.Armed.Should().BeNull();
+        model!.PendingPrompt.Should().BeNull();
+        model.HooksMode.Should().Be("absent"); // Default value mapping check
     }
 
     [Fact]
@@ -137,28 +140,29 @@ public class RenderModelBehaviors
         model!.AgentState.Should().Be(state);
     }
 
-    // ── Given armed prompt fields ────────────────────────────────────
+    // ── Given pending prompt fields ──────────────────────────────────
 
     [Fact]
-    public void Given_Armed_Prompt_Should_Preserve_All_Fields()
+    public void Given_Pending_Prompt_Should_Preserve_All_Fields()
     {
         var json = """
         {
             "type": "render",
             "agent_state": "idle",
-            "armed": {
+            "hooks_mode": "active",
+            "pending_prompt": {
                 "id": "prompt_xyz",
                 "label": "Execute Plan",
-                "command": "/execute"
+                "style": "prefill"
             }
         }
         """;
 
         var model = JsonSerializer.Deserialize<RenderModel>(json);
 
-        model!.Armed!.Id.Should().Be("prompt_xyz");
-        model.Armed.Label.Should().Be("Execute Plan");
-        model.Armed.Command.Should().Be("/execute");
+        model!.PendingPrompt!.Id.Should().Be("prompt_xyz");
+        model.PendingPrompt.Label.Should().Be("Execute Plan");
+        model.PendingPrompt.Style.Should().Be("prefill");
     }
 
     // ── snake_case invariant ─────────────────────────────────────────
@@ -169,13 +173,17 @@ public class RenderModelBehaviors
         var model = new RenderModel
         {
             AgentState = "idle",
-            Armed = new ArmedPrompt { Id = "x", Label = "Y", Command = "/z" }
+            HooksMode = "active",
+            PendingPrompt = new PendingPromptState { Id = "x", Label = "Y", Style = "queue" }
         };
 
         var json = JsonSerializer.Serialize(model);
 
         json.Should().Contain("\"agent_state\"");
+        json.Should().Contain("\"hooks_mode\"");
+        json.Should().Contain("\"pending_prompt\"");
         json.Should().NotContain("\"AgentState\"");
-        json.Should().NotContain("\"agentState\"");
+        json.Should().NotContain("\"HooksMode\"");
+        json.Should().NotContain("\"PendingPrompt\"");
     }
 }

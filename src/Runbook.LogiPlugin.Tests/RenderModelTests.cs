@@ -14,10 +14,11 @@ public class RenderModelTests
         {
             "type": "render",
             "agent_state": "idle",
-            "armed": {
+            "hooks_mode": "active",
+            "pending_prompt": {
                 "id": "prep_pr",
                 "label": "Prep PR",
-                "command": "/runbook:prep-pr"
+                "style": "queue"
             },
             "keypad": {
                 "slots": [
@@ -37,11 +38,12 @@ public class RenderModelTests
         model.Should().NotBeNull();
         model!.Type.Should().Be("render");
         model.AgentState.Should().Be("idle");
+        model.HooksMode.Should().Be("active");
 
-        model.Armed.Should().NotBeNull();
-        model.Armed!.Id.Should().Be("prep_pr");
-        model.Armed.Label.Should().Be("Prep PR");
-        model.Armed.Command.Should().Be("/runbook:prep-pr");
+        model.PendingPrompt.Should().NotBeNull();
+        model.PendingPrompt!.Id.Should().Be("prep_pr");
+        model.PendingPrompt.Label.Should().Be("Prep PR");
+        model.PendingPrompt.Style.Should().Be("queue");
 
         model.Keypad.Should().NotBeNull();
         model.Keypad.Slots.Should().HaveCount(1);
@@ -68,7 +70,8 @@ public class RenderModelTests
         model.Should().NotBeNull();
         model!.Type.Should().Be("render");
         model.AgentState.Should().Be("unknown");
-        model.Armed.Should().BeNull();
+        model.HooksMode.Should().Be("absent");
+        model.PendingPrompt.Should().BeNull();
         model.Keypad.Should().NotBeNull();
         model.Keypad.Slots.Should().BeEmpty();
     }

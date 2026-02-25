@@ -24,8 +24,10 @@ public class ProtocolFixtureTests
         model.Should().NotBeNull();
         model!.Type.Should().Be("render");
         model.AgentState.Should().Be("idle");
-        model.Armed.Should().NotBeNull();
-        model.Armed!.Id.Should().Be("prep_pr");
+        model.HooksMode.Should().Be("active");
+        model.PendingPrompt.Should().NotBeNull();
+        model.PendingPrompt!.Id.Should().Be("prep_pr");
+        model.PendingPrompt.Style.Should().Be("queue");
         model.Keypad.Slots.Should().HaveCount(2);
         model.Keypad.Slots[0].Armed.Should().BeTrue();
         model.Keypad.Slots[1].Armed.Should().BeFalse();
