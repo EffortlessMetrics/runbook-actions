@@ -125,8 +125,8 @@ Sent to VS Code extension to execute editor-level behaviors.
 // Text
 { "type": "send_text", "text": "/runbook:prep-pr", "should_execute": true }
 
-// Sequence (for Ctrl+C, Esc, Enter)
-{ "type": "send_sequence", "sequence": "enter" }
+// Sequence (for Ctrl+C, Esc, Enter, Ctrl+U)
+{ "type": "send_sequence", "sequence": "ctrl_u" }
 
 // Terminals
 { "type": "focus_terminal", "index": 1 }
