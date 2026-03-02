@@ -36,9 +36,13 @@ public sealed class DaemonClient : IAsyncDisposable
     private bool _disposed;
 
     // Adjustment coalescing.
-    private int _pendingRollerDelta;
-    private int _pendingDialDelta;
-    private Timer? _coalesceTimer;
+    private AdjustmentCoalescer? _adjustmentCoalescer;
+
+    public DaemonClient()
+    {
+        _adjustmentCoalescer = new AdjustmentCoalescer(TimeSpan.FromMilliseconds(16),
+            (kind, delta) => _ = SendRawAsync(new { type = "adjustment", kind, delta }));
+    }
 
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
@@ -77,7 +81,6 @@ public sealed class DaemonClient : IAsyncDisposable
             DaemonUrl = envUrl;
 
         _cts = new CancellationTokenSource();
-        _coalesceTimer = new Timer(FlushCoalescedAdjustments, null, 16, 16);
         _ = Task.Run(MaintainConnectionAsync);
         return Task.CompletedTask;
     }
@@ -175,27 +178,11 @@ public sealed class DaemonClient : IAsyncDisposable
 
     /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
     public void EnqueueAdjustment(string kind, int delta)
-    {
-        if (kind == "roller")
-            Interlocked.Add(ref _pendingRollerDelta, delta);
-        else
-            Interlocked.Add(ref _pendingDialDelta, delta);
-    }
+        => _adjustmentCoalescer?.Enqueue(kind, delta);
 
     /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
     public Task SendAdjustmentAsync(string kind, int delta)
         => SendRawAsync(new { type = "adjustment", kind, delta });
-
-    // ── Coalescing timer ─────────────────────────────────────────────
-
-    private void FlushCoalescedAdjustments(object? _)
-    {
-        var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
-        var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
-
-        if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
-        if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
-    }
 
     // ── Internal send/receive ────────────────────────────────────────
 
@@ -278,7 +265,7 @@ public sealed class DaemonClient : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        _coalesceTimer?.Dispose();
+        _adjustmentCoalescer?.Dispose();
         try { _cts?.Cancel(); }
         catch { }
 
@@ -296,6 +283,7 @@ public sealed class DaemonClient : IAsyncDisposable
         _cts?.Dispose();
         _ws = null;
         _cts = null;
+        _adjustmentCoalescer = null;
         State = ConnectionState.Disconnected;
     }
 }
