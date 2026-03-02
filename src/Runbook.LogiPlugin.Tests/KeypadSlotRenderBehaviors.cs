@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Loupedeck;
-using Runbook.Render;
+using Runbook.Protocol;
 using Xunit;
 
 namespace Runbook.LogiPlugin.Tests;

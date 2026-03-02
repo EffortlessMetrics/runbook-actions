@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using FluentAssertions;
-using Runbook.Render;
+using Runbook.Protocol;
 using Xunit;
 
 namespace Runbook.LogiPlugin.Tests;
