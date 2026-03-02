@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Loupedeck;
 using Runbook.Daemon;
-using Runbook.Render;
+using Runbook.Protocol;
 using Xunit;
 
 namespace Runbook.LogiPlugin.Tests;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Runbook.Render;
+namespace Runbook.Protocol;
 
 public sealed class RenderModel
 {

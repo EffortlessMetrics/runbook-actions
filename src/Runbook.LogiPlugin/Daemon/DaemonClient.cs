@@ -43,7 +43,7 @@ public sealed class DaemonClient : IAsyncDisposable
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
 
-    public Render.RenderModel? Render { get; private set; }
+    public Runbook.Protocol.RenderModel? Render { get; private set; }
 
     /// <summary>Daemon URL. Set via ConfigureDaemonUrl before ConnectAsync.</summary>
     public string DaemonUrl { get; set; } = "ws://127.0.0.1:29381/ws";
@@ -262,7 +262,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
                 if (typeProp.GetString() == "render")
                 {
-                    Render = JsonSerializer.Deserialize<Render.RenderModel>(json);
+                    Render = JsonSerializer.Deserialize<Runbook.Protocol.RenderModel>(json);
                     RenderUpdated?.Invoke(this, EventArgs.Empty);
                 }
             }
