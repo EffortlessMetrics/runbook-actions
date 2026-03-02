@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentAssertions;
+using Runbook.Protocol;
 using Xunit;
 
 namespace Runbook.LogiPlugin.Tests;
@@ -20,7 +21,7 @@ public class OutboundMessageBehaviors
     [InlineData(8)]
     public void KeypadPress_Should_Be_Snake_Case(int slot)
     {
-        var msg = new { type = "keypad_press", slot };
+        var msg = new KeypadPressMessage(slot);
         var json = JsonSerializer.Serialize(msg);
 
         json.Should().Contain("\"type\"");
@@ -38,7 +39,7 @@ public class OutboundMessageBehaviors
     [InlineData("enter")]
     public void DialpadButtonPress_Should_Be_Snake_Case(string button)
     {
-        var msg = new { type = "dialpad_button_press", button };
+        var msg = new DialpadButtonPressMessage(button);
         var json = JsonSerializer.Serialize(msg);
 
         json.Should().Contain("\"dialpad_button_press\"");
@@ -53,7 +54,7 @@ public class OutboundMessageBehaviors
     [InlineData("next")]
     public void Page_Should_Have_Correct_Shape(string direction)
     {
-        var msg = new { type = "page", direction };
+        var msg = new PageMessage(direction);
         var json = JsonSerializer.Serialize(msg);
 
         json.Should().Contain("\"type\"");
@@ -69,7 +70,7 @@ public class OutboundMessageBehaviors
     [InlineData("roller", 0)]
     public void Adjustment_Should_Be_Snake_Case(string kind, int delta)
     {
-        var msg = new { type = "adjustment", kind, delta };
+        var msg = new AdjustmentMessage(kind, delta);
         var json = JsonSerializer.Serialize(msg);
 
         json.Should().Contain("\"type\"");
@@ -83,14 +84,7 @@ public class OutboundMessageBehaviors
     [Fact]
     public void Hello_Should_Be_Snake_Case()
     {
-        var msg = new
-        {
-            type = "hello",
-            client = "logi",
-            protocol = 1,
-            version = "0.1.0",
-            client_id = "abc12345"
-        };
+        var msg = new HelloMessage("logi", 1, "0.1.0", "abc12345");
         var json = JsonSerializer.Serialize(msg);
 
         json.Should().Contain("\"client_id\"");
@@ -105,11 +99,11 @@ public class OutboundMessageBehaviors
     {
         var messages = new object[]
         {
-            new { type = "keypad_press", slot = 0 },
-            new { type = "dialpad_button_press", button = "enter" },
-            new { type = "page", direction = "next" },
-            new { type = "adjustment", kind = "roller", delta = 1 },
-            new { type = "hello", client = "logi", protocol = 1, version = "0.1.0", client_id = "x" },
+            new KeypadPressMessage(0),
+            new DialpadButtonPressMessage("enter"),
+            new PageMessage("next"),
+            new AdjustmentMessage("roller", 1),
+            new HelloMessage("logi", 1, "0.1.0", "x"),
         };
 
         foreach (var msg in messages)
