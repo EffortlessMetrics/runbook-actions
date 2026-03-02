@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Runbook.Protocol.Messages;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -98,31 +99,17 @@ public sealed class DaemonClient : IAsyncDisposable
                 await _ws.ConnectAsync(new Uri(DaemonUrl), _cts.Token);
 
                 // Hello handshake.
-                await SendRawAsync(new
-                {
-                    type = "hello",
-                    client = "logi",
-                    protocol = 1,
-                    version = "0.1.0",
-                    client_id = ClientId
-                });
+                await SendRawAsync(OutboundMessages.Hello(ClientId));
 
                 // Wait for hello_ack (timeout 5s).
                 var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
-                if (ackJson is not null)
+                if (ackJson is not null &&
+                    InboundMessages.TryGetHelloAckProtocol(ackJson, out var daemonProtocol) &&
+                    daemonProtocol != 1)
                 {
-                    using var doc = JsonDocument.Parse(ackJson);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("type", out var t) && t.GetString() == "hello_ack")
-                    {
-                        if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
-                        {
-                            ProtocolErrorDetail = $"plugin=1 daemon={p.GetInt32()}";
-                            State = ConnectionState.ProtocolError;
-                            return; // Stop reconnecting.
-                        }
-                        // Handshake OK.
-                    }
+                    ProtocolErrorDetail = $"plugin=1 daemon={daemonProtocol}";
+                    State = ConnectionState.ProtocolError;
+                    return; // Stop reconnecting.
                 }
 
                 State = ConnectionState.Connected;
@@ -165,13 +152,13 @@ public sealed class DaemonClient : IAsyncDisposable
     // ── Public send methods ──────────────────────────────────────────
 
     public Task SendKeypadPressAsync(int slot)
-        => SendRawAsync(new { type = "keypad_press", slot });
+        => SendRawAsync(OutboundMessages.KeypadPress(slot));
 
     public Task SendDialpadButtonPressAsync(string button)
-        => SendRawAsync(new { type = "dialpad_button_press", button });
+        => SendRawAsync(OutboundMessages.DialpadButtonPress(button));
 
     public Task SendPageAsync(string direction)
-        => SendRawAsync(new { type = "page", direction });
+        => SendRawAsync(OutboundMessages.Page(direction));
 
     /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
     public void EnqueueAdjustment(string kind, int delta)
@@ -184,7 +171,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
     /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
     public Task SendAdjustmentAsync(string kind, int delta)
-        => SendRawAsync(new { type = "adjustment", kind, delta });
+        => SendRawAsync(OutboundMessages.Adjustment(kind, delta));
 
     // ── Coalescing timer ─────────────────────────────────────────────
 
@@ -193,8 +180,8 @@ public sealed class DaemonClient : IAsyncDisposable
         var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
         var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
 
-        if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
-        if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
+        if (roller != 0) _ = SendRawAsync(OutboundMessages.Adjustment("roller", roller));
+        if (dial != 0) _ = SendRawAsync(OutboundMessages.Adjustment("dial", dial));
     }
 
     // ── Internal send/receive ────────────────────────────────────────
@@ -256,13 +243,9 @@ public sealed class DaemonClient : IAsyncDisposable
 
             try
             {
-                using var doc = JsonDocument.Parse(json);
-                if (!doc.RootElement.TryGetProperty("type", out var typeProp))
-                    continue;
-
-                if (typeProp.GetString() == "render")
+                if (InboundMessages.TryParseRender(json, out var render))
                 {
-                    Render = JsonSerializer.Deserialize<Render.RenderModel>(json);
+                    Render = render;
                     RenderUpdated?.Invoke(this, EventArgs.Empty);
                 }
             }

@@ -28,4 +28,8 @@
     <PackageReference Include="System.Text.Json" Version="8.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Runbook.Protocol\Runbook.Protocol.csproj" />
+  </ItemGroup>
+
 </Project>
