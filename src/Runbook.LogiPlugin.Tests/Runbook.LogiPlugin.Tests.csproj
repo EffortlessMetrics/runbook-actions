@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Runbook.LogiPlugin\Runbook.LogiPlugin.csproj" />
+    <ProjectReference Include="..\Runbook.Protocol\Runbook.Protocol.csproj" />
   </ItemGroup>
 
 </Project>
