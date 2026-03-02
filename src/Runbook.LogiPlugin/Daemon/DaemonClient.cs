@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Runbook.Protocol;
+using Runbook.Render;
 
 namespace Runbook.Daemon;
 
@@ -43,7 +45,7 @@ public sealed class DaemonClient : IAsyncDisposable
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
 
-    public Render.RenderModel? Render { get; private set; }
+    public RenderModel? Render { get; private set; }
 
     /// <summary>Daemon URL. Set via ConfigureDaemonUrl before ConnectAsync.</summary>
     public string DaemonUrl { get; set; } = "ws://127.0.0.1:29381/ws";
@@ -98,14 +100,7 @@ public sealed class DaemonClient : IAsyncDisposable
                 await _ws.ConnectAsync(new Uri(DaemonUrl), _cts.Token);
 
                 // Hello handshake.
-                await SendRawAsync(new
-                {
-                    type = "hello",
-                    client = "logi",
-                    protocol = 1,
-                    version = "0.1.0",
-                    client_id = ClientId
-                });
+                await SendRawAsync(new HelloMessage("logi", 1, "0.1.0", ClientId));
 
                 // Wait for hello_ack (timeout 5s).
                 var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
@@ -165,13 +160,13 @@ public sealed class DaemonClient : IAsyncDisposable
     // ── Public send methods ──────────────────────────────────────────
 
     public Task SendKeypadPressAsync(int slot)
-        => SendRawAsync(new { type = "keypad_press", slot });
+        => SendRawAsync(new KeypadPressMessage(slot));
 
     public Task SendDialpadButtonPressAsync(string button)
-        => SendRawAsync(new { type = "dialpad_button_press", button });
+        => SendRawAsync(new DialpadButtonPressMessage(button));
 
     public Task SendPageAsync(string direction)
-        => SendRawAsync(new { type = "page", direction });
+        => SendRawAsync(new PageMessage(direction));
 
     /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
     public void EnqueueAdjustment(string kind, int delta)
@@ -184,7 +179,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
     /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
     public Task SendAdjustmentAsync(string kind, int delta)
-        => SendRawAsync(new { type = "adjustment", kind, delta });
+        => SendRawAsync(new AdjustmentMessage(kind, delta));
 
     // ── Coalescing timer ─────────────────────────────────────────────
 
@@ -193,8 +188,8 @@ public sealed class DaemonClient : IAsyncDisposable
         var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
         var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
 
-        if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
-        if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
+        if (roller != 0) _ = SendRawAsync(new AdjustmentMessage("roller", roller));
+        if (dial != 0) _ = SendRawAsync(new AdjustmentMessage("dial", dial));
     }
 
     // ── Internal send/receive ────────────────────────────────────────
@@ -262,7 +257,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
                 if (typeProp.GetString() == "render")
                 {
-                    Render = JsonSerializer.Deserialize<Render.RenderModel>(json);
+                    Render = JsonSerializer.Deserialize<RenderModel>(json);
                     RenderUpdated?.Invoke(this, EventArgs.Empty);
                 }
             }
