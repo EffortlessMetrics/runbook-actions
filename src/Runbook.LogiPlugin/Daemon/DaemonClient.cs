@@ -34,11 +34,7 @@ public sealed class DaemonClient : IAsyncDisposable
     private CancellationTokenSource? _cts;
     private ConnectionState _state = ConnectionState.Disconnected;
     private bool _disposed;
-
-    // Adjustment coalescing.
-    private int _pendingRollerDelta;
-    private int _pendingDialDelta;
-    private Timer? _coalesceTimer;
+    private readonly AdjustmentCoalescer _adjustmentCoalescer = new();
 
     public event EventHandler? RenderUpdated;
     public event EventHandler<ConnectionState>? StateChanged;
@@ -77,7 +73,7 @@ public sealed class DaemonClient : IAsyncDisposable
             DaemonUrl = envUrl;
 
         _cts = new CancellationTokenSource();
-        _coalesceTimer = new Timer(FlushCoalescedAdjustments, null, 16, 16);
+        _adjustmentCoalescer.Start(FlushCoalescedAdjustments);
         _ = Task.Run(MaintainConnectionAsync);
         return Task.CompletedTask;
     }
@@ -109,20 +105,11 @@ public sealed class DaemonClient : IAsyncDisposable
 
                 // Wait for hello_ack (timeout 5s).
                 var ackJson = await ReceiveOneMessageAsync(TimeSpan.FromSeconds(5));
-                if (ackJson is not null)
+                if (DaemonHandshake.TryGetProtocolError(ackJson, out var detail))
                 {
-                    using var doc = JsonDocument.Parse(ackJson);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("type", out var t) && t.GetString() == "hello_ack")
-                    {
-                        if (root.TryGetProperty("protocol", out var p) && p.GetInt32() != 1)
-                        {
-                            ProtocolErrorDetail = $"plugin=1 daemon={p.GetInt32()}";
-                            State = ConnectionState.ProtocolError;
-                            return; // Stop reconnecting.
-                        }
-                        // Handshake OK.
-                    }
+                    ProtocolErrorDetail = detail;
+                    State = ConnectionState.ProtocolError;
+                    return; // Stop reconnecting.
                 }
 
                 State = ConnectionState.Connected;
@@ -176,10 +163,7 @@ public sealed class DaemonClient : IAsyncDisposable
     /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
     public void EnqueueAdjustment(string kind, int delta)
     {
-        if (kind == "roller")
-            Interlocked.Add(ref _pendingRollerDelta, delta);
-        else
-            Interlocked.Add(ref _pendingDialDelta, delta);
+        _adjustmentCoalescer.Enqueue(kind, delta);
     }
 
     /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
@@ -188,13 +172,12 @@ public sealed class DaemonClient : IAsyncDisposable
 
     // ── Coalescing timer ─────────────────────────────────────────────
 
-    private void FlushCoalescedAdjustments(object? _)
+    private void FlushCoalescedAdjustments((int roller, int dial) deltas)
     {
-        var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
-        var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
-
-        if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
-        if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
+        if (deltas.roller != 0)
+            _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = deltas.roller });
+        if (deltas.dial != 0)
+            _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = deltas.dial });
     }
 
     // ── Internal send/receive ────────────────────────────────────────
@@ -278,7 +261,7 @@ public sealed class DaemonClient : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
-        _coalesceTimer?.Dispose();
+        _adjustmentCoalescer.Dispose();
         try { _cts?.Cancel(); }
         catch { }
 
