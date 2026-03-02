@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.LogiPlugin", "Runbo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.LogiPlugin.Tests", "Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj", "{636576EC-B0D9-4073-B8EA-799A6BE8B740}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.Protocol", "Runbook.Protocol\Runbook.Protocol.csproj", "{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{636576EC-B0D9-4073-B8EA-799A6BE8B740}.Release|x64.Build.0 = Release|Any CPU
 		{636576EC-B0D9-4073-B8EA-799A6BE8B740}.Release|x86.ActiveCfg = Release|Any CPU
 		{636576EC-B0D9-4073-B8EA-799A6BE8B740}.Release|x86.Build.0 = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|x64.Build.0 = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Debug|x86.Build.0 = Debug|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|x64.ActiveCfg = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|x64.Build.0 = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|x86.ActiveCfg = Release|Any CPU
+		{9E3BFB5B-2C2A-4A80-8D1A-3B745B32D3AA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
