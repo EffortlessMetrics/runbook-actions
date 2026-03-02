@@ -36,8 +36,7 @@ public sealed class DaemonClient : IAsyncDisposable
     private bool _disposed;
 
     // Adjustment coalescing.
-    private int _pendingRollerDelta;
-    private int _pendingDialDelta;
+    private readonly CoalescedAdjustmentBuffer _adjustmentBuffer = new();
     private Timer? _coalesceTimer;
 
     public event EventHandler? RenderUpdated;
@@ -176,10 +175,7 @@ public sealed class DaemonClient : IAsyncDisposable
     /// <summary>Coalesced: delta is accumulated and flushed on the 16ms timer.</summary>
     public void EnqueueAdjustment(string kind, int delta)
     {
-        if (kind == "roller")
-            Interlocked.Add(ref _pendingRollerDelta, delta);
-        else
-            Interlocked.Add(ref _pendingDialDelta, delta);
+        _adjustmentBuffer.Enqueue(kind, delta);
     }
 
     /// <summary>Non-coalesced adjustment send (legacy / direct).</summary>
@@ -190,8 +186,7 @@ public sealed class DaemonClient : IAsyncDisposable
 
     private void FlushCoalescedAdjustments(object? _)
     {
-        var roller = Interlocked.Exchange(ref _pendingRollerDelta, 0);
-        var dial = Interlocked.Exchange(ref _pendingDialDelta, 0);
+        var (roller, dial) = _adjustmentBuffer.Drain();
 
         if (roller != 0) _ = SendRawAsync(new { type = "adjustment", kind = "roller", delta = roller });
         if (dial != 0) _ = SendRawAsync(new { type = "adjustment", kind = "dial", delta = dial });
