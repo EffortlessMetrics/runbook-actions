@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.LogiPlugin", "Runbo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.LogiPlugin.Tests", "Runbook.LogiPlugin.Tests\Runbook.LogiPlugin.Tests.csproj", "{636576EC-B0D9-4073-B8EA-799A6BE8B740}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runbook.Protocol", "Runbook.Protocol\Runbook.Protocol.csproj", "{A1C6EAB2-9B66-4E07-A6D6-173B3C883215}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
